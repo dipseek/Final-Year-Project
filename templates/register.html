@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Travel Identity{% endblock %}
+
+{% block content %}
+<h2>Passenger Registration</h2>
+
+<div id="error-message" class="error"></div>
+
+<form id="registerForm">
+    <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="E.g., John Doe" required>
+    </div>
+    
+    <div class="form-group">
+        <label>Ticket / Aadhaar Number</label>
+        <!-- Added strict 12-digit number validation -->
+        <input type="text" id="aadhaar" pattern="\d{12}" minlength="12" maxlength="12" title="Must be exactly 12 digits" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="E.g., 123456789012" required>
+    </div>
+    
+    <div class="form-group">
+        <label>Face Verification</label>
+        <p class="muted" style="margin-bottom:10px;">Select a clear photo or use webcam.</p>
+        
+        <input type="file" id="fileUpload" accept="image/*" onchange="previewFile()" style="margin-bottom:15px;">
+        
+        <button type="button" class="btn camera-btn" id="startCamBtn" onclick="startCamera()">📷 Open Web Camera</button>
+        <video id="videoElement" autoplay playsinline></video>
+        <button type="button" id="captureBtn" class="btn" style="display:none; background: var(--success); margin-bottom: 15px;" onclick="captureImage()">📸 Capture Photo Now</button>
+        <div id="captureSuccess" class="success" style="padding: 8px; margin-bottom: 10px; display:none;">Photo Captured!</div>
+        
+        <canvas id="canvasElement"></canvas>
+    </div>
+    
+    <button type="button" id="submitBtn" onclick="submitRegistration()" style="margin-top:10px;">Register Passenger</button>
+</form>
+
+<script>
+    let video = document.getElementById('videoElement');
+    let canvas = document.getElementById('canvasElement');
+    let captureBtn = document.getElementById('captureBtn');
+    let captureSuccess = document.getElementById('captureSuccess');
+    let imageBase64Data = null;
+
+    async function startCamera() {
+        try {
+            let stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            document.getElementById('startCamBtn').style.display = 'none'; // hide start btn
+            
+            // Wait for video to actually load before showing capture button
+            video.onloadedmetadata = () => {
+                video.play();
+                captureBtn.style.display = 'block';
+            };
+            canvas.style.display = 'none';
+            captureSuccess.style.display = 'none';
+        } catch (err) {
+            alert("Camera access denied or error: " + err);
+        }
+    }
+
+    function captureImage() {
+        if(video.videoWidth === 0) {
+            alert("Camera is still loading. Please wait a second.");
+            return;
+        }
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        imageBase64Data = canvas.toDataURL('image/jpeg', 0.9);
+        
+        video.style.display = 'none';
+        captureBtn.style.display = 'none';
+        canvas.style.display = 'block';
+        captureSuccess.style.display = 'block';
+        
+        let stream = video.srcObject;
+        if(stream){
+            let tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+    }
+
+    function previewFile() {
+        let file = document.getElementById('fileUpload').files[0];
+        let reader = new FileReader();
+        reader.onloadend = function() {
+            imageBase64Data = reader.result;
+            let img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.style.display = 'block';
+            }
+            img.src = imageBase64Data;
+        }
+        if(file) reader.readAsDataURL(file);
+    }
+
+    async function submitRegistration() {
+        let name = document.getElementById('name').value;
+        let aadhaar = document.getElementById('aadhaar').value;
+        let errorMsgBox = document.getElementById('error-message');
+        let submitBtn = document.getElementById("submitBtn");
+        
+        if(!name || !aadhaar) {
+            alert("Please fill all details!"); return;
+        }
+        if(aadhaar.length !== 12) {
+            alert("Aadhaar Number must be exactly 12 digits long."); return;
+        }
+        if(!imageBase64Data) {
+            alert("Please capture or upload a face photo!"); return;
+        }
+
+        errorMsgBox.style.display = "none";
+        submitBtn.innerText = "Registering in secure vault...";
+        submitBtn.disabled = true;
+
+        let formData = new FormData();
+        formData.append("name", name);
+        formData.append("aadhaar", aadhaar);
+        formData.append("image_base64", imageBase64Data);
+
+        try {
+            let response = await fetch("/register", {
+                method: "POST",
+                body: formData
+            });
+            let result = await response.json();
+            
+            if(result.status === "success") {
+                window.location.href = `/success?name=${encodeURIComponent(result.name)}&qr_path=${encodeURIComponent(result.qr_path)}`;
+            } else {
+                errorMsgBox.innerText = result.message;
+                errorMsgBox.style.display = "block";
+                submitBtn.innerText = "Register Passenger";
+                submitBtn.disabled = false;
+            }
+        } catch (err) {
+            alert("Network error occurred.");
+            submitBtn.innerText = "Register Passenger";
+            submitBtn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Travel Identity System{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css?v=2.0">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <header>
+        <div class="navbar">
+            <a href="/" class="logo">Adhaar Secure Travel Identity System</a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/register_page">Register</a></li>
+                <li><a href="/verify">Verify</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
