@@ -195,5 +195,3 @@ async def api_verify_face(aadhaar: str = Form(...), image_base64: str = Form(...
         return JSONResponse({"status": "error", "message": f"System error: {str(e)}"})
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
