@@ -142,7 +142,9 @@ async def verify_page(request: Request):
 
 @app.post("/api/verify_face")
 async def api_verify_face(aadhaar: str = Form(...), image_base64: str = Form(...)):
-    if global_recognizer is None:
+    recognizer = get_trained_model()
+
+    if recognizer is None:
         return JSONResponse({"status": "error", "message": "No registered passengers in the system!"})
         
     try:
@@ -164,7 +166,12 @@ async def api_verify_face(aadhaar: str = Form(...), image_base64: str = Form(...
         cropped_face = cv2.resize(cropped_face, (200, 200))
         
         # 4. Predict
-        label, confidence = global_recognizer.predict(cropped_face)
+        recognizer = get_trained_model()
+
+        if recognizer is None:
+            return JSONResponse({"status": "error", "message": "No trained model available!"})
+
+        label, confidence = recognizer.predict(cropped_face)
         
         conn = sqlite3.connect("data/travel_system.db")
         cursor = conn.cursor()
