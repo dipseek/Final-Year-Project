@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Success - Registration Complete{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <div class="success" style="font-size: 18px; margin-bottom: 30px;">
+        ✅ {{ message }}
+    </div>
+    
+    <h3 style="color: var(--text-dark);">Welcome aboard, {{ name }}!</h3>
+    <p class="muted">Your face data and ticket ID have been synced successfully.</p>
+    
+    <div class="qr-box">
+        <h4 style="margin-bottom: 15px; color: var(--primary);">Your Digital Boarding Pass</h4>
+        <img src="{{ qr_path }}" alt="QR Code">
+        <p class="muted" style="margin-top: 10px; font-size: 12px;">Keep this safe for the checkpoint.</p>
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <a href="/verify" class="btn" style="margin-bottom: 10px;">Proceed to Security Checkpoint</a>
+        <a href="/register_page" class="btn" style="background: var(--text-muted);">Register Another Passenger</a>
+    </div>
+</div>
+{% endblock %}

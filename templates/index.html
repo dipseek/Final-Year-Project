@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Travel Identity{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h2 style="font-size: 28px; color: var(--primary);">Welcome to Adhaar Secure Travel Identity System</h2>
+    <p class="muted" style="margin-bottom: 30px; font-size: 16px;">
+        The next generation AI-Based Secure Travel Identity System using Face Recognition and QR Code authentication.
+    </p>
+
+    <div class="home-buttons">
+        <a href="/register_page" class="btn">Register New Passenger</a>
+        <a href="/verify" class="btn" style="background: linear-gradient(135deg, var(--secondary), #1fa2ff);">Go to Checkpoint (Verify)</a>
+    </div>
+</div>
+{% endblock %}
