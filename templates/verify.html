@@ -1,64 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Verify - Security Checkpoint{% endblock %}
-
-{% block head %}
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<style>
-    .step { display: none; }
-    .active-step { display: block; animation: fadeIn 0.4s ease-out;}
-    h3 { color: var(--primary); margin-bottom: 15px; font-size: 20px;}
-    #result-box { display: none; margin-top: 25px; }
-</style>
-{% endblock %}
+{% block title %}Verify - Face Checkpoint{% endblock %}
 
 {% block content %}
 <div class="text-center">
-    <h2>Security Checkpoint</h2>
-    
-    <!-- STEP 1: SCAN QR -->
-    <div id="step-qr" class="step active-step">
-        <h3>Step 1: Scan Boarding Ticket (QR)</h3>
-        <p class="muted" style="margin-bottom:20px;">Please show your pass to the camera</p>
-        <div id="reader" style="border: 2px dashed var(--secondary);"></div>
-    </div>
-    
-    <!-- STEP 2: FACE VERIFICATION -->
-    <div id="step-face" class="step">
-        <h3>Step 2: Live Face Verification</h3>
-        <p id="scanned-id-display" class="muted" style="margin-bottom: 20px; font-weight:bold;"></p>
-        
-        <video id="videoElement" autoplay playsinline></video>
-        <canvas id="canvasElement"></canvas>
-        
-        <button id="captureBtn" onclick="verifyFace()" style="background: var(--warning);">Scan Live Face</button>
-        <button id="retryBtn" onclick="location.reload()" style="display:none; background: var(--text-muted);">Process Next Passenger</button>
-        
-        <div id="result-box"></div>
-    </div>
+    <h2>Biometric Security Checkpoint</h2>
+    <p class="muted" style="margin-bottom: 20px;">Face-only verification mode is active. Position your face clearly and scan.</p>
+
+    <video id="videoElement" autoplay playsinline></video>
+    <canvas id="canvasElement"></canvas>
+
+    <button id="captureBtn" onclick="verifyFace()" style="background: var(--warning);">Scan Live Face</button>
+    <button id="retryBtn" onclick="location.reload()" style="display:none; background: var(--text-muted);">Process Next Passenger</button>
+
+    <div id="result-box" style="display:none; margin-top: 25px;"></div>
 </div>
 
 <script>
-    let scannedAadhaar = null;
-    let html5QrcodeScanner = null;
     let video = document.getElementById('videoElement');
     let canvas = document.getElementById('canvasElement');
-
-    function onScanSuccess(decodedText, decodedResult) {
-        html5QrcodeScanner.clear();
-        scannedAadhaar = decodedText;
-        
-        document.getElementById('step-qr').classList.remove('active-step');
-        document.getElementById('step-face').classList.add('active-step');
-        document.getElementById('scanned-id-display').innerText = "Ticket ID Scanned: " + scannedAadhaar;
-        
-        startFaceCamera();
-    }
-
-    function onScanFailure(error) {}
-
-    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
     async function startFaceCamera() {
         try {
@@ -90,7 +50,6 @@
         canvas.style.display = "block";
         
         let formData = new FormData();
-        formData.append("aadhaar", scannedAadhaar);
         formData.append("image_base64", imageBase64Data);
 
         try {
@@ -106,7 +65,7 @@
             
             if(result.status === "success") {
                 resultBox.className = "success";
-                resultBox.innerHTML = `✅ ${result.message}<br><span style='font-size:12px; color: #1e8449;'>Match Score: ${result.score}</span>`;
+                resultBox.innerHTML = `✅ ${result.message}<br><span style='font-size:12px; color: #1e8449;'>Passenger: ${result.name} (${result.aadhaar}) | Match Score: ${result.score}</span>`;
             } else {
                 resultBox.className = "error";
                 resultBox.innerHTML = `❌ ${result.message}<br><span style='font-size:12px; color: #a93226;'>Reason code/Score: ${result.score || 'None'}</span>`;
@@ -119,5 +78,7 @@
             captureBtn.style.display = "none";
         }
     }
+
+    startFaceCamera();
 </script>
 {% endblock %}
