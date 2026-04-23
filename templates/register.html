@@ -138,7 +138,11 @@
             let result = await response.json();
             
             if(result.status === "success") {
+<<<<<<< HEAD
                 window.location.href = `/success?name=${encodeURIComponent(result.name)}&aadhaar=${encodeURIComponent(result.aadhaar)}`;
+=======
+                window.location.href = `/success?name=${encodeURIComponent(result.name)}&qr_path=${encodeURIComponent(result.qr_path)}`;
+>>>>>>> b1c49b7eb5c30ffbb3971b9ae2f44811a373264e
             } else {
                 errorMsgBox.innerText = result.message;
                 errorMsgBox.style.display = "block";
