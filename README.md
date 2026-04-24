@@ -1,45 +1,94 @@
-# Final Project 2.0 - Advanced AI Secure Travel Identity System
+# Aadhaar Secure Travel Identity System (Face-Only Verification)
 
-Namaste! 🙏 Welcome to the **Advanced version** of your final year project. Ab yeh project bilkul ek real application ban chuka hai jisme **Live Webcams**, aur **In-browser QR Scanning** ki power add ki gayi hai.
+This project is a final-year style biometric checkpoint system built with FastAPI, OpenCV, and SQLite.
+It allows passenger registration with face enrollment and performs live **face-only verification** at checkpoint time.
 
-Is advanced flow mein:
-1. **Register → Live Face Capture → Validation → QR Ticket Generate.**
-2. **Verification → QR Scan via Web Camera → Validation → Face Match via Webcam → Access Granted.**
+## Features
 
----
+- Live face capture from browser camera or uploaded image
+- Face detection validation:
+  - No face detected -> rejected
+  - Multiple faces detected -> rejected
+- Face preprocessing and normalization (`200x200` grayscale)
+- Passenger face enrollment in SQLite
+- Live checkpoint verification using OpenCV LBPH recognizer
+- Clear success/error responses with match score
 
-### Step 1: Registration (Live Face Capture)
-Humne frontend (`register.html`) mein JavaScript ka `navigator.mediaDevices.getUserMedia` API use kiya hai.
-- Ye function browser ke andar directly aapka Laptop ya Mobile Camera open karta hai.
-- Ye video frame se photo nikalta hai aur us photo ko `Base64 String` (Lamba text) mein badal kar server par API ke roop mein bhejta hai.
-- **Backend (app.py):** Python mein Base64 text ko Numpy array image me tabdeel karke OpenCV `CascadeClassifier` ko diya jata hai.
-- Agar koi chehra nahi hai (**No face detected**) ya tasveer me 2 log hain (**Multiple faces detected**), to system error deta hai aur reject kar deta hai.
+## Current Flow
 
-### Step 2: Face Storage & Resizing
-- **Accuracy Improvement:** Chehra crop karne ke baad OpenCV ( backend ) usay fix shape `(200, 200)` mein Resize karta hai. Resize karne se machine learning model ki duri/distance (Tolerance) galti nahi karti chahe photo camera se kitni hi dur q na ho.
-- **Storage:** OpenCV un face pixels ko SQLite Database ke andar store/save kar deta hai. Aadhaar code ko encrypt karke QR image banega aur locally save hoga.
+1. **Register Passenger**
+   - Enter name and 12-digit Aadhaar
+   - Capture/upload face image
+   - Backend validates and stores processed face data
 
-### Step 3: Live Checkpoint Verification (QR + Face)
-Ab `verify.html` bilkul ek Checkpoint jaisa dikhta hai!
-1. **QR Scan:** Woh aapse pehle apni Ticket (QR Code) dikhane kehega. JavaScript ki library `html5-qrcode` automatically aapke hardware camera se QR code ko padh kar uske andar ka aadhaar nikal legi.
-2. **Face Scan:** QR verify hone ke baad camera dubara khulega Live Face photo khichne ke liye.
-3. Backend par woh naya face wapas extract hota hai aur stored data se Compare (`global_recognizer.predict`) hota hai. Agar tolerance 110 se niche hui, **Match -> Verified**. Varna system "Not Verified" / Reject kar dega.
+2. **Verify Passenger (Face-Only)**
+   - Open verification page
+   - Capture live face
+   - System predicts identity and checks confidence threshold
+   - Access granted/denied with result details
 
----
+## Tech Stack
 
-## 🎓 Advanced Viva Questions & Answers
+- **Backend:** FastAPI, Uvicorn
+- **Computer Vision:** OpenCV (`opencv-contrib-python`)
+- **Database:** SQLite
+- **Frontend:** HTML, CSS, JavaScript, Jinja2 templates
+- **Other:** NumPy, Pillow, python-multipart
 
-**Q1: Tumne website par Webcam backend python/FastAPI se kaise connect kiya?**
-**Ans:** Sir, Client-side (HTML) par humne JS ka `getUserMedia()` API use kiya hai camera capture karne ke liye. Capture hone par us frame ko `<canvas>` par draw kiya, phir us canvas image ko `base64 encoded string` mein convert karke AJAX (fetch backend) ke jariye secure HTTP POST request par Python API `/register` par bheja. Waha Base64 decode ho kar wapas image matrix ban jata hai.
+## Project Structure
 
-**Q2: OpenCV "Encoding" ya Training background me kaise kam karta hai?**
-**Ans:** OpenCV ka Local Binary Pattern Histogram (LBPH) kisi face ki photo ko chote-chote squares/grids me kaat-ta hai (jaise 8x8), aur unke ander ki brightness/pixels ko aspas ke pixels se compare kar k ek math "histogram pattern" banata hai. Isliye isko save karna easy hota hai. Match karte waqt ye dono histograms me farak (distance/confidence) ko paktar leta hai.
+```text
+aadhar-project/
+|- app.py
+|- requirements.txt
+|- templates/
+|  |- base.html
+|  |- index.html
+|  |- register.html
+|  |- verify.html
+|  |- success.html
+|- static/
+|  |- style.css
+|- data/
+|  |- travel_system.db
+```
 
-**Q3: Tumne Multiple faces aur No face wali galti kaise dur ki?**
-**Ans:** Python OpenCV mein jab hum `face_cascade.detectMultiScale()` method run karte hain, toh wo kitne faces photo mein hain unki list return karta hai. Maine Logic likha hai ki `if len(faces) == 0` (to throw error "No Face") aur `if len(faces) > 1` (to throw error "Multiple faces").
+## Installation
 
-**Q4: Accuracy improve karne k liye kya steps liye gye hain?**
-**Ans:** 
-1. **Light Check:** Code strict restrictions deta h agar lighting theek nhi ya chehre theek frame me nahi.
-2. **Standardization:** Crop hone k baad har face ko `cv2.resize()` se `200x200` banaya gya hai, is se LBPH shape distortion k khatro sy bch jata hy.
-3. **Tolerance limit:** Confidence cutoff logic tweak kiya gaya hai (at `110`) taking practical scenario of college laptop cameras into consideration.
+1. Create and activate a virtual environment (recommended).
+2. Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Run the Project
+
+```bash
+python app.py
+```
+
+Open in browser:
+
+- `http://127.0.0.1:10000`
+
+## Main Endpoints
+
+- `GET /` - Home page
+- `GET /register_page` - Registration page
+- `POST /register` - Register passenger
+- `GET /verify` - Face verification page
+- `POST /api/verify_face` - Verify live face
+
+## Notes
+
+- Aadhaar is validated as exactly 12 digits.
+- Face recognition uses LBPH model retrained from enrolled users.
+- Current matching threshold is controlled in `app.py` using `MATCH_THRESHOLD`.
+
+## Future Enhancements
+
+- Liveness detection (anti-spoofing)
+- Admin dashboard for logs and analytics
+- Multi-camera checkpoint support
+- Better model calibration and dataset management
