@@ -23,7 +23,8 @@
         <label>Face Verification</label>
         <p class="muted" style="margin-bottom:10px;">Select a clear photo or use webcam.</p>
         
-        <input type="file" id="fileUpload" accept="image/*" onchange="previewFile()" style="margin-bottom:15px;">
+        <input type="file" id="fileUpload" accept="image/*" onchange="previewFile()" style="display:none;">
+        <button type="button" class="btn" style="margin-bottom:10px; background:#2d98da;" onclick="document.getElementById('fileUpload').click()">Choose Face Image File</button>
         
         <button type="button" class="btn camera-btn" id="startCamBtn" onclick="startCamera()">📷 Open Web Camera</button>
         <video id="videoElement" autoplay playsinline></video>
@@ -138,11 +139,7 @@
             let result = await response.json();
             
             if(result.status === "success") {
-<<<<<<< HEAD
                 window.location.href = `/success?name=${encodeURIComponent(result.name)}&aadhaar=${encodeURIComponent(result.aadhaar)}`;
-=======
-                window.location.href = `/success?name=${encodeURIComponent(result.name)}&qr_path=${encodeURIComponent(result.qr_path)}`;
->>>>>>> b1c49b7eb5c30ffbb3971b9ae2f44811a373264e
             } else {
                 errorMsgBox.innerText = result.message;
                 errorMsgBox.style.display = "block";

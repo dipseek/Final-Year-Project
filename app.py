@@ -15,7 +15,7 @@ templates = Jinja2Templates(directory="templates")
 os.makedirs("data/faces", exist_ok=True)
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-MATCH_THRESHOLD = 85
+MATCH_THRESHOLD = 50
 
 
 def init_db():
@@ -94,9 +94,9 @@ async def register(name: str = Form(...), aadhaar: str = Form(...), image_base64
             return JSONResponse({"status": "error", "message": "Invalid image data. Please upload/capture a clear photo."})
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=8, minSize=(100, 100))
         if len(faces) == 0:
-            return JSONResponse({"status": "error", "message": "No face detected. Please look into the camera with proper lighting."})
+            return JSONResponse({"status": "error", "message": "No clear face detected. Ensure your face is visible and well-lit."})
         if len(faces) > 1:
             return JSONResponse({"status": "error", "message": f"Multiple faces detected ({len(faces)}). Please ensure only 1 person is in frame."})
 
@@ -155,9 +155,9 @@ async def api_verify_face(image_base64: str = Form(...)):
             return JSONResponse({"status": "error", "message": "Invalid live capture. Please rescan your face."})
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=8, minSize=(100, 100))
         if len(faces) == 0:
-            return JSONResponse({"status": "error", "message": "No face detected in live camera. Try adjusting light."})
+            return JSONResponse({"status": "error", "message": "No clear face detected in live camera. Try adjusting light."})
         if len(faces) > 1:
             return JSONResponse({"status": "error", "message": "Multiple faces detected. Only one person allowed at checkpoint."})
 
@@ -198,8 +198,23 @@ async def api_verify_face(image_base64: str = Form(...)):
         return JSONResponse({"status": "error", "message": f"System error: {str(e)}"})
 
 
+@app.post("/api/clear_registrations")
+async def api_clear_registrations():
+    global global_recognizer
+    try:
+        conn = sqlite3.connect("data/travel_system.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users")
+        conn.commit()
+        conn.close()
+        global_recognizer = None
+        return JSONResponse({"status": "success", "message": "All passenger registrations cleared."})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": f"Failed to clear registrations: {str(e)}"})
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
